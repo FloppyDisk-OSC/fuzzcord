@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#232428">
+  <title>Fuzzcord</title>
+
+  <style>
+    :root {
+      --background: #232428;
+      --sidebar: #1e1f22;
+      --panel: #2b2d31;
+      --hover: #35373c;
+      --accent: #a970ff;
+      --text: #f2f3f5;
+      --muted: #949ba4;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      background: var(--background);
+      color: var(--text);
+      height: 100dvh;
+      overflow: hidden;
+    }
+
+    button, input {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .app {
+      display: flex;
+      height: 100dvh;
+    }
+
+    /* Server sidebar */
+
+    .servers {
+      width: 68px;
+      flex-shrink: 0;
+      background: var(--sidebar);
+      display: flex;
+      align-items: center;
+      flex-direction: column;
+      gap: 12px;
+      padding: 14px 8px;
+      overflow-y: auto;
+    }
+
+    .server {
+      width: 48px;
+      height: 48px;
+      border: 0;
+      border-radius: 16px;
+      background: var(--panel);
+      color: var(--text);
+      font-size: 20px;
+      flex-shrink: 0;
+      transition: border-radius 0.15s;
+    }
+
+    .server:hover,
+    .server.active {
+      border-radius: 13px;
+      background: var(--accent);
+    }
+
+    .divider {
+      width: 32px;
+      border-top: 2px solid #3b3d44;
+    }
+
+    /* Channel sidebar */
+
+    .channels {
+      width: 220px;
+      flex-shrink: 0;
+      background: var(--sidebar);
+      padding: 18px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      overflow-y: auto;
+    }
+
+    .brand {
+      font-size: 21px;
+      font-weight: 800;
+      padding: 0 8px 16px;
+    }
+
+    .section-title {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+      margin: 14px 8px 4px;
+    }
+
+    .channel {
+      background: transparent;
+      color: var(--muted);
+      border: 0;
+      border-radius: 6px;
+      text-align: left;
+      padding: 10px;
+      width: 100%;
+    }
+
+    .channel:hover,
+    .channel.active {
+      background: var(--hover);
+      color: var(--text);
+    }
+
+    .user-panel {
+      margin-top: auto;
+      padding: 12px 8px;
+      background: #18191c;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .user-panel strong {
+      display: block;
+      overflow-wrap: anywhere;
+    }
+
+    .user-panel small {
+      color: var(--muted);
+    }
+
+    /* Main chat */
+
+    .chat {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chat-header {
+      min-height: 60px;
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      border-bottom: 1px solid #3b3d44;
+      font-weight: 700;
+      overflow-wrap: anywhere;
+    }
+
+    .messages {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    .welcome {
+      padding: 20px 0;
+    }
+
+    .welcome h1 {
+      font-size: 25px;
+    }
+
+    .welcome p,
+    .message-time {
+      color: var(--muted);
+    }
+
+    /* Individual messages */
+
+    .message {
+      display: flex;
+      gap: 12px;
+      margin: 22px 0;
+    }
+
+    .avatar {
+      width: 42px;
+      height: 42px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      background: var(--accent);
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      color: white;
+    }
+
+    .message-content {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .message-author {
+      font-weight: 700;
+    }
+
+    .message-time {
+      font-size: 11px;
+      margin-left: 8px;
+    }
+
+    .message-text {
+      margin-top: 5px;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .reply-preview {
+      border-left: 3px solid var(--accent);
+      padding: 5px 9px;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .message-actions {
+      margin-top: 6px;
+    }
+
+    .reply-button {
+      border: 0;
+      background: transparent;
+      color: #b9a0ff;
+      padding: 4px;
+      border-radius: 4px;
+    }
+
+    .reply-button:hover {
+      background: var(--hover);
+    }
+
+    .empty-note {
+      text-align: center;
+      color: var(--muted);
+      margin: 24px 0;
+    }
+
+    /* Message composer */
+
+    .composer-wrap {
+      padding: 12px 20px 20px;
+    }
+
+    .replying {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 8px;
+      overflow-wrap: anywhere;
+    }
+
+    .cancel-reply {
+      border: 0;
+      background: transparent;
+      color: var(--accent);
+      margin-left: 8px;
+    }
+
+    .composer {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #383a40;
+      padding: 8px;
+      border-radius: 10px;
+    }
+
+    .composer input {
+      flex: 1;
+      min-width: 0;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: var(--text);
+      padding: 10px 4px;
+    }
+
+    .composer input::placeholder {
+      color: var(--muted);
+    }
+
+    .composer button {
+      border: 0;
+      border-radius: 7px;
+      background: var(--accent);
+      color: white;
+      padding: 10px 14px;
+      font-weight: 700;
+    }
+
+    .composer button:hover {
+      filter: brightness(1.1);
+    }
+
+    button:focus-visible,
+    input:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    /* Mobile layout */
+
+    @media (max-width: 650px) {
+      .servers {
+        width: 58px;
+        padding: 10px 5px;
+      }
+
+      .server {
+        width: 42px;
+        height: 42px;
+      }
+
+      .channels {
+        width: 145px;
+        padding: 12px 6px;
+      }
+
+      .brand {
+        font-size: 17px;
+        padding-left: 5px;
+      }
+
+      .chat-header {
+        padding: 0 12px;
+      }
+
+      .messages {
+        padding: 12px;
+      }
+
+      .composer-wrap {
+        padding: 8px;
+      }
+
+      .composer {
+        gap: 4px;
+      }
+
+      .composer button {
+        padding: 10px;
+      }
+    }
+
+    @media (max-width: 380px) {
+      .channels {
+        width: 115px;
+      }
+
+      .brand {
+        font-size: 15px;
+      }
+    }
+  </style>
+
+</head>
+
+<body>
+  <div class="app">
+
+```
+<!-- Server sidebar -->
+<aside class="servers">
+  <button
+    class="server active"
+    id="home-button"
+    title="Home"
+    aria-label="Home"
+  >🏠</button>
+
+  <div class="divider"></div>
+
+  <button
+    class="server"
+    id="example-server"
+    title="Fuzzcord server"
+    aria-label="Fuzzcord server"
+  >🐾</button>
+
+  <button
+    class="server"
+    id="add-server"
+    title="Create server"
+    aria-label="Create server"
+  >＋</button>
+</aside>
+
+<!-- Channel sidebar -->
+<aside class="channels">
+  <div class="brand">Fuzzcord</div>
+
+  <div class="section-title">YOUR SPACE</div>
+
+  <button class="channel active" data-channel="general">
+    # general
+  </button>
+
+  <button class="channel" data-channel="memes">
+    # memes
+  </button>
+
+  <button class="channel" data-channel="art">
+    # art
+  </button>
+
+  <div class="section-title">DIRECT MESSAGES</div>
+
+  <button class="channel" id="add-dm">
+    ＋ New message
+  </button>
+
+  <div class="user-panel">
+    <strong>🐾 Fuzz</strong>
+    <small>Prototype account</small>
+  </div>
+</aside>
+
+<!-- Chat area -->
+<main class="chat">
+
+  <header class="chat-header">
+    <span id="channel-title"># general</span>
+  </header>
+
+  <section
+    class="messages"
+    id="messages"
+    aria-live="polite"
+    aria-label="Chat messages"
+  >
+    <div class="welcome" id="welcome">
+      <div class="avatar">#</div>
+      <h1 id="welcome-title">Welcome to #general!</h1>
+      <p>This is the beginning of your Fuzzcord adventure.</p>
+    </div>
+
+    <div class="empty-note" id="empty-note" hidden>
+      No messages yet. Start the conversation!
+    </div>
+  </section>
+
+  <div class="composer-wrap">
+    <div class="replying" id="replying" hidden>
+      <span id="replying-text"></span>
+      <button
+        class="cancel-reply"
+        id="cancel-reply"
+        type="button"
+      >Cancel</button>
+    </div>
+
+    <form class="composer" id="message-form">
+      <input
+        id="message-input"
+        type="text"
+        placeholder="Message #general"
+        autocomplete="off"
+        maxlength="2000"
+        aria-label="Write a message"
+      >
+
+      <button type="submit">Send</button>
+    </form>
+  </div>
+
+</main>
+```
+
+  </div>
+
+  <script>
+    const messagesElement = document.getElementById("messages");
+    const form = document.getElementById("message-form");
+    const input = document.getElementById("message-input");
+
+    const title = document.getElementById("channel-title");
+    const welcomeTitle = document.getElementById("welcome-title");
+    const welcome = document.getElementById("welcome");
+    const emptyNote = document.getElementById("empty-note");
+
+    const replying = document.getElementById("replying");
+    const replyingText = document.getElementById("replying-text");
+
+    let currentChannel = "general";
+    let replyTarget = null;
+
+    // Each channel has its own separate message list.
+    const channelMessages = {
+      general: [],
+      memes: [],
+      art: []
+    };
+
+    function getCurrentMessages() {
+      return channelMessages[currentChannel];
+    }
+
+    function clearReply() {
+      replyTarget = null;
+      replying.hidden = true;
+      replyingText.textContent = "";
+    }
+
+    function selectChannel(channel) {
+      if (!Object.hasOwn(channelMessages, channel)) {
+        return;
+      }
+
+      currentChannel = channel;
+
+      // Update the channel header.
+      title.textContent = "# " + currentChannel;
+
+      // Update the welcome heading too.
+      welcomeTitle.textContent =
+        "Welcome to #" + currentChannel + "!";
+
+      // Update the message input placeholder.
+      input.placeholder = "Message #" + currentChannel;
+
+      // Update the selected channel button.
+      document.querySelectorAll("[data-channel]").forEach(button => {
+        button.classList.toggle(
+          "active",
+          button.dataset.channel === currentChannel
+        );
+      });
+
+      // A reply cannot accidentally carry into another channel.
+      clearReply();
+
+      renderMessages();
+    }
+
+    function createMessageElement(message, list) {
+      const row = document.createElement("article");
+      row.className = "message";
+
+      const avatar = document.createElement("div");
+      avatar.className = "avatar";
+      avatar.textContent = "F";
+
+      const content = document.createElement("div");
+      content.className = "message-content";
+
+      const header = document.createElement("div");
+
+      const author = document.createElement("span");
+      author.className = "message-author";
+      author.textContent = "Fuzz";
+
+      const time = document.createElement("span");
+      time.className = "message-time";
+
+      time.textContent = new Date(message.time).toLocaleTimeString(
+        [],
+        {
+          hour: "numeric",
+          minute: "2-digit"
+        }
+      );
+
+      header.append(author, time);
+      content.append(header);
+
+      // Display a preview of the message being replied to.
+      if (message.replyTo) {
+        const original = list.find(
+          item => item.id === message.replyTo
+        );
+
+        if (original) {
+          const preview = document.createElement("div");
+          preview.className = "reply-preview";
+
+          preview.textContent =
+            "↳ Reply to Fuzz: " + original.text;
+
+          content.append(preview);
+        }
+      }
+
+      const text = document.createElement("div");
+      text.className = "message-text";
+      text.textContent = message.text;
+
+      const actions = document.createElement("div");
+      actions.className = "message-actions";
+
+      const replyButton = document.createElement("button");
+      replyButton.type = "button";
+      replyButton.className = "reply-button";
+      replyButton.textContent = "↩ Reply";
+
+      replyButton.setAttribute(
+        "aria-label",
+        "Reply to message: " + message.text
+      );
+
+      replyButton.addEventListener("click", () => {
+        replyTarget = message.id;
+
+        replyingText.textContent =
+          "Replying to Fuzz: " + message.text;
+
+        replying.hidden = false;
+        input.focus();
+      });
+
+      actions.append(replyButton);
+      content.append(text, actions);
+
+      row.append(avatar, content);
+
+      return row;
+    }
+
+    function renderMessages() {
+      // Remove old message elements without destroying
+      // the welcome section or empty-state element.
+      messagesElement
+        .querySelectorAll(".message")
+        .forEach(element => element.remove());
+
+      const list = getCurrentMessages();
+
+      // Show the welcome section only when the channel is empty.
+      welcome.hidden = list.length > 0;
+
+      // Show the empty-state text only when appropriate.
+      emptyNote.hidden = list.length > 0;
+
+      // Draw messages belonging to the current channel.
+      for (const message of list) {
+        const element = createMessageElement(message, list);
+        messagesElement.append(element);
+      }
+
+      messagesElement.scrollTop =
+        messagesElement.scrollHeight;
+    }
+
+    form.addEventListener("submit", event => {
+      event.preventDefault();
+
+      const text = input.value.trim();
+
+      if (!text) {
+        return;
+      }
+
+      const list = getCurrentMessages();
+
+      list.push({
+        id: crypto.randomUUID(),
+        text: text,
+        time: Date.now(),
+        replyTo: replyTarget
+      });
+
+      input.value = "";
+
+      clearReply();
+      renderMessages();
+      input.focus();
+    });
+
+    // Switch channels.
+    document.querySelectorAll("[data-channel]").forEach(button => {
+      button.addEventListener("click", () => {
+        selectChannel(button.dataset.channel);
+      });
+    });
+
+    // Cancel a pending reply.
+    document.getElementById("cancel-reply")
+      .addEventListener("click", clearReply);
+
+    // Prototype buttons for features we will build later.
+    document.getElementById("add-server").addEventListener(
+      "click",
+      () => {
+        alert(
+          "Server creation is coming soon! " +
+          "We'll implement real servers and channels next."
+        );
+      }
+    );
+
+    document.getElementById("add-dm").addEventListener(
+      "click",
+      () => {
+        alert(
+          "Direct messages are coming soon! " +
+          "They will eventually support private conversations."
+        );
+      }
+    );
+
+    document.getElementById("home-button").addEventListener(
+      "click",
+      () => {
+        alert(
+          "Your home screen will become your friends list " +
+          "and direct messages."
+        );
+      }
+    );
+
+    document.getElementById("example-server").addEventListener(
+      "click",
+      () => {
+        alert(
+          "Real servers will be implemented in a future step."
+        );
+      }
+    );
+
+    // Draw the initial channel.
+    renderMessages();
+  </script>
+
+</body>
+</html>
